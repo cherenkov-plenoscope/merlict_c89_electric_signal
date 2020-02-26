@@ -21,7 +21,7 @@ CASE("truncate_invalid_arrival_times") {
     num_invalid_photons = 0u;
     for (p = 0; p < pulse_pipeline.vector.size; p++) {
         struct mlispPulse pulse = mlispPulseVector_at(&pulse_pipeline, p);
-        int32_t slice = mli_round(pulse.arrival_time/time_slice_duration);
+        int32_t slice = mli_near_int(pulse.arrival_time/time_slice_duration);
 
         if (slice < 0 || slice >= MLISP_NUM_TIME_SLICES) {
             num_invalid_photons++;

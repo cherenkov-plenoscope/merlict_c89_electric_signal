@@ -160,7 +160,7 @@ int mlisp_extract_pulses(
                                 prng,
                                 0.0f,
                                 extractor_arrival_time_std));
-                const uint64_t slice = mli_round(
+                const int64_t slice = mli_near_int(
                         reconstructed_arrival_time/
                         time_slice_duration);
 
