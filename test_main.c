@@ -8,6 +8,8 @@
 int main(int argc, char *argv[]) {
         #include "tests/test_init.c"
         #include "tests/test_add_pulse_with_crosstalk.c"
+        #include "tests/test_pulse_extraction.c"
+        #include "tests/test_photonstream.c"
 
         printf("__SUCCESS__\n");
         return EXIT_SUCCESS;

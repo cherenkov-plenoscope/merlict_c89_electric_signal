@@ -3,93 +3,59 @@
 #define MLI_SINGLE_PHOTON_SIGNAL_PROCESSING_H_
 
 #include <stdint.h>
+#include <math.h>
 #include "../merlict_c89/mliFunc.h"
 #include "../merlict_c89/mliVector.h"
 #include "../merlict_c89/mliMT19937.h"
 
+#include "mlisp_constants.h"
 
-#define MLISP_DEFAULT_SIMULATION_TRUTH -1
-#define MLISP_NIGHT_SKY_BACKGROUND -100
-#define MLISP_CONVERTER_ACCIDENTAL -201
-#define MLISP_CONVERTER_CROSSTALK -202
+#include "mlispPhoton.h"
+#include "mlispPhotonVector.h"
 
+#include "mlispPulse.h"
+#include "mlispPulseVector.h"
 
-struct mlispPhoton {
-        double arrival_time;
-        double wavelength;
-        int32_t simulation_truth_id;
-};
+#include "mlispExtractedPulse.h"
+#include "mlispExtractedPulseVector.h"
 
-struct mlispPhoton mlispPhoton_init() {
-        struct mlispPhoton pph;
-        pph.simulation_truth_id = MLISP_DEFAULT_SIMULATION_TRUTH;
-        pph.arrival_time = 0.;
-        pph.wavelength = 0.;
-        return pph;
-}
+#include "mlispPhotonStream.h"
+#include "mlispPhotonStream_io.h"
+#include "mlispPhotonStream_test.h"
 
-struct mlispPulse {
-        double arrival_time;
-        int32_t simulation_truth_id;
-};
-
-struct mlispPulse mlispPulse_init() {
-        struct mlispPulse out;
-        out.simulation_truth_id = MLISP_DEFAULT_SIMULATION_TRUTH;
-        out.arrival_time = 0.;
-        return out;
-}
-
-struct mlispPulse mlispPulse_from_photon(const struct mlispPhoton ph) {
-        struct mlispPulse out;
-        out.simulation_truth_id = ph.simulation_truth_id;
-        out.arrival_time = ph.arrival_time;
-        return out;
-}
-
-struct mlispExtractedPulse {
-        uint8_t arrival_time_slice;
-        int32_t simulation_truth_id;
-};
-
-struct mlispExtractedPulse mlispsExtractedPulse_init() {
-        struct mlispExtractedPulse out;
-        out.simulation_truth_id = MLISP_DEFAULT_SIMULATION_TRUTH;
-        out.arrival_time_slice = 0u;
-        return out;
-}
-
-struct mlispPhotElecConvConf {
-        struct mliFunc quantum_efficiency_vs_wavelength;
-        double dark_rate;
-        double probability_for_second_pulse;
-};
-
-struct mlispPhotElecConvConf mlispPhotElecConvConf_init() {
-        struct mlispPhotElecConvConf out;
-        out.dark_rate = 0.;
-        out.probability_for_second_pulse = 0.;
-        out.quantum_efficiency_vs_wavelength = mliFunc_init();
-        return out;
-}
-
-int mlisp_photon_pipeline_to_pulse_pipeline(
-        const struct mliVector *photon_pipeline,
-        const double exposure_time,
-        struct mliMT19937 *prng,
-        struct mliVector *out_electric_pipeline)
-{
-        return 1;
-}
+/*
+ *  mliPhoton
+ *
+ *     |
+ *     |        strip away support-vector, and direction-vector
+ *     V
+ *
+ *  mlispPhoton
+ *
+ *     |        photo-electric-converter
+ *     |        strip away wavelength
+ *     V
+ *
+ *  mlispPulse
+ *
+ *     |
+ *     |        assign to time-slice
+ *     V
+ *
+ *  mlispExtractedPulse
+ *
+ */
 
 
 int mlisp_converter_add_incoming_pulse(
-        struct mliVector *out_electric_pipeline,
+        struct mlispPulseVector *out_electric_pipeline,
         const struct mlispPulse incoming_pulse,
         const double converter_crosstalk_probability,
         struct mliMT19937 *prng)
 {
-        mli_c(mliVector_push_back(out_electric_pipeline, &incoming_pulse));
+        mli_c(mlispPulseVector_push_back(
+                out_electric_pipeline,
+                incoming_pulse));
         if (converter_crosstalk_probability >= mliMT19937_uniform(prng)) {
                 struct mlispPulse crosstalk_pulse;
                 crosstalk_pulse.arrival_time = incoming_pulse.arrival_time;
@@ -107,7 +73,7 @@ error:
 
 
 int mlisp_converter_add_internal_poisson_accidentals(
-        struct mliVector *out_electric_pipeline,
+        struct mlispPulseVector *out_electric_pipeline,
         const double rate,
         const double exposure_time,
         const double converter_crosstalk_probability,
@@ -133,8 +99,8 @@ error:
 
 
 int mlisp_photo_electric_convert(
-        const struct mliVector *photon_pipeline,
-        struct mliVector *out_electric_pipeline,
+        const struct mlispPhotonVector *photon_pipeline,
+        struct mlispPulseVector *out_electric_pipeline,
         const double exposure_time,
         const struct mliFunc *converter_quantum_efficiency_vs_wavelength,
         const double converter_dark_rate,
@@ -142,10 +108,11 @@ int mlisp_photo_electric_convert(
         struct mliMT19937 *prng)
 {
         uint64_t i;
-        for (i = 0; i < photon_pipeline->size; i++) {
+        for (i = 0; i < photon_pipeline->vector.size; i++) {
 
-                struct mlispPhoton ph =
-                *(struct mlispPhoton *)mliVector_at(photon_pipeline, i);
+                struct mlispPhoton ph = mlispPhotonVector_at(
+                        photon_pipeline,
+                        i);
 
                 double quantum_efficiency = MLI_NAN;
                 mli_c(mliFunc_evaluate(
@@ -169,6 +136,44 @@ int mlisp_photo_electric_convert(
                 converter_crosstalk_probability,
                 prng));
 
+        return 1;
+error:
+        return 0;
+}
+
+
+int mlisp_extract_pulses(
+        const struct mlispPulseVector *pulses,
+        struct mlispExtractedPulseVector *out_extracted_pulses,
+        const double time_slice_duration,
+        const uint64_t max_num_time_slices,
+        const double extractor_arrival_time_std,
+        struct mliMT19937 *prng)
+{
+        uint64_t p;
+        for (p = 0; p < pulses->vector.size; p++) {
+                struct mlispPulse pulse = mlispPulseVector_at(pulses, p);
+
+                const double reconstructed_arrival_time = (
+                        pulse.arrival_time +
+                        mliMT19937_normal_Irwin_Hall_approximation(
+                                prng,
+                                0.0f,
+                                extractor_arrival_time_std));
+                const uint64_t slice = mli_round(
+                        reconstructed_arrival_time/
+                        time_slice_duration);
+
+                if (slice >= 0 && slice < max_num_time_slices) {
+                        struct mlispExtractedPulse extracted_pulse;
+                        extracted_pulse.simulation_truth_id = pulse.
+                                simulation_truth_id;
+                        extracted_pulse.arrival_time_slice = (uint8_t)slice;
+                        mli_c(mlispExtractedPulseVector_push_back(
+                                out_extracted_pulses,
+                                extracted_pulse));
+                }
+        }
         return 1;
 error:
         return 0;
