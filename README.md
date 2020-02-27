@@ -6,7 +6,7 @@ An add-on-library to ```merlict_c89```
 
 A simple simulation of the signal-processing commonly used in the atmospheric Cherenkov-method in e.g. Cherenkov-telescopes. Convert photons to electric signals, extract arrival-times from the signals, and export. We abstract away analog time-series by using the concept of pulses. Pulses represent __single__-photons, and relevant artifacts of the read-out. A pulses only property is its arrival-time.
 
-##Photo-electric-converter
+## Photo-electric-converter
 We can simulate the basic properties of PhotoMultiplier-Tubes (PMT), and Silicon-PhotoMultipliers (SiPMs, or MPPCs, or arrays of G-APDs).
 
 ### photon-detection-efficieny vs. wavelength
