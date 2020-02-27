@@ -1,6 +1,7 @@
 /* Copyright 2020 Sebastian Achim Mueller                                     */
 /* Compile with:                                                              */
-/* gcc test_main.c -o test -std=c89 -lm -Wall -pedantic    */
+/* gcc test_main.c -o test -std=c89 -lm -Wall -pedantic                       */
+/* g++ test_main.c -o test -lm -Wall -pedantic                                */
 #include "../merlict_c89/mli_testing.h"
 #include "merlict_c89_electric_signal.h"
 

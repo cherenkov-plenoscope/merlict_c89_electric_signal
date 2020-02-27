@@ -5,7 +5,8 @@ CASE("truncate_invalid_arrival_times") {
         const double arrival_time_std = 0.0;
         uint64_t num_invalid_photons = 0u;
         uint64_t num_passing_photons = 0u;
-        int64_t i, p, ph;
+        int64_t i;
+        uint64_t p;
 
         struct mliesPulseVector pulse_pipeline = mliesPulseVector_init();
         struct mliesExtractedPulseVector extraction_pipeline;
@@ -45,11 +46,11 @@ CASE("truncate_invalid_arrival_times") {
 
         CHECK(pulse_pipeline.vector.size != extraction_pipeline.vector.size);
         num_passing_photons = 0;
-        for (ph = 0; ph < extraction_pipeline.vector.size; ph++) {
+        for (p = 0; p < extraction_pipeline.vector.size; p++) {
                 struct mliesExtractedPulse expulse;
                 expulse = mliesExtractedPulseVector_at(
                     &extraction_pipeline,
-                    ph);
+                    p);
                 CHECK(255 > expulse.arrival_time_slice);
                 num_passing_photons++;
         }
@@ -72,7 +73,7 @@ CASE("arrival_time_std") {
         double *reconstructed_arrival_times = NULL;
         double reco_mean;
         double reco_std;
-        int64_t num_reco;
+        uint64_t num_reco;
         CHECK(mliesPulseVector_malloc(&pulse_pipeline, 0u));
 
         for (i = 0; i < 10*1000; i++) {

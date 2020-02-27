@@ -164,7 +164,7 @@ int mlies_extract_pulses(
                         reconstructed_arrival_time/
                         time_slice_duration);
 
-                if (slice >= 0 && slice < max_num_time_slices) {
+                if (slice >= 0 && slice < (int64_t)max_num_time_slices) {
                         struct mliesExtractedPulse extracted_pulse;
                         extracted_pulse.simulation_truth_id = pulse.
                                 simulation_truth_id;

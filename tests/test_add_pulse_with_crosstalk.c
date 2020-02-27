@@ -51,8 +51,9 @@ CASE("add pulse to electric pipeline with crosstalk") {
                 }
         }
 
-        CHECK(
-                abs(num_crosstalk - num_crosstalk_expected) <
+        CHECK_MARGIN(
+                (double)num_crosstalk,
+                (double)num_crosstalk_expected,
                 0.01*num_crosstalk_expected);
         CHECK(
                 electric_pipeline.vector.size - num_crosstalk ==
