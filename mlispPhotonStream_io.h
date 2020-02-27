@@ -67,13 +67,13 @@ int mlispPhotonStream_malloc_from_file(
         mlispPhotonStream_free(phs);
 
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
-        mli_check(temp_char == 'P', "Expected first char to be 'P'.");
+        mli_check(temp_char == 'P', "Expected char[0] to be 'P'.");
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
-        mli_check(temp_char == 'H', "Expected first char to be 'H'.");
+        mli_check(temp_char == 'H', "Expected char[1] to be 'H'.");
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
-        mli_check(temp_char == 'S', "Expected first char to be 'S'.");
+        mli_check(temp_char == 'S', "Expected char[2] to be 'S'.");
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
-        mli_check(temp_char == '\n', "Expected first char to be newline.");
+        mli_check(temp_char == '\n', "Expected char[3] to be newline.");
 
         mli_fread(&format_version, sizeof(uint64_t), 1, file);
         mli_c(format_version == MLISP_PHOTONSTREAM_FORMAT_VERSION);
