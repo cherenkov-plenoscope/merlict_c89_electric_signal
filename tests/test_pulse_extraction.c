@@ -20,8 +20,11 @@ CASE("truncate_invalid_arrival_times") {
 
         num_invalid_photons = 0u;
         for (p = 0; p < pulse_pipeline.vector.size; p++) {
-                struct mlispPulse pulse = mlispPulseVector_at(&pulse_pipeline, p);
-                int32_t slice = mli_near_int(pulse.arrival_time/time_slice_duration);
+                struct mlispPulse pulse = mlispPulseVector_at(
+                        &pulse_pipeline,
+                        p);
+                int32_t slice = mli_near_int(
+                    pulse.arrival_time/time_slice_duration);
 
                 if (slice < 0 || slice >= MLISP_NUM_TIME_SLICES) {
                         num_invalid_photons++;
@@ -43,7 +46,8 @@ CASE("truncate_invalid_arrival_times") {
         CHECK(pulse_pipeline.vector.size != extraction_pipeline.vector.size);
         num_passing_photons = 0;
         for (ph = 0; ph < extraction_pipeline.vector.size; ph++) {
-                struct mlispExtractedPulse expulse = mlispExtractedPulseVector_at(
+                struct mlispExtractedPulse expulse;
+                expulse = mlispExtractedPulseVector_at(
                     &extraction_pipeline,
                     ph);
                 CHECK(255 > expulse.arrival_time_slice);
