@@ -1,54 +1,54 @@
 /* Copyright 2020 Sebastian Achim Mueller */
-#ifndef MLISPEXTRACTEDPULSEVECTOR_H_
-#define MLISPEXTRACTEDPULSEVECTOR_H_
+#ifndef MLIESEXTRACTEDPULSEVECTOR_H_
+#define MLIESEXTRACTEDPULSEVECTOR_H_
 
 #include <stdint.h>
 #include "../merlict_c89/mliVector.h"
-#include "mlispExtractedPulse.h"
+#include "mliesExtractedPulse.h"
 
-struct mlispExtractedPulseVector {
+struct mliesExtractedPulseVector {
         struct mliVector vector;
 };
 
-struct mlispExtractedPulseVector mlispExtractedPulseVector_init()
+struct mliesExtractedPulseVector mliesExtractedPulseVector_init()
 {
-        struct mlispExtractedPulseVector pulses;
+        struct mliesExtractedPulseVector pulses;
         pulses.vector = mliVector_init();
         return pulses;
 }
 
-void mlispExtractedPulseVector_free(struct mlispExtractedPulseVector *pulses)
+void mliesExtractedPulseVector_free(struct mliesExtractedPulseVector *pulses)
 {
         mliVector_free(&pulses->vector);
 }
 
-int mlispExtractedPulseVector_malloc(
-        struct mlispExtractedPulseVector *pulses,
+int mliesExtractedPulseVector_malloc(
+        struct mliesExtractedPulseVector *pulses,
         const uint64_t capcity)
 {
         mli_c(mliVector_malloc(
                 &pulses->vector,
                 capcity,
-                sizeof(struct mlispExtractedPulse)));
+                sizeof(struct mliesExtractedPulse)));
         return 1;
   error:
         return 0;
 }
 
-struct mlispExtractedPulse mlispExtractedPulseVector_at(
-        const struct mlispExtractedPulseVector *pulses,
+struct mliesExtractedPulse mliesExtractedPulseVector_at(
+        const struct mliesExtractedPulseVector *pulses,
         const uint64_t idx)
 {
-        struct mlispExtractedPulse spph = *(struct mlispExtractedPulse*)
+        struct mliesExtractedPulse spph = *(struct mliesExtractedPulse*)
                 mliVector_at(
                     &pulses->vector,
                     idx);
         return spph;
 }
 
-int mlispExtractedPulseVector_push_back(
-        struct mlispExtractedPulseVector *pulses,
-        const struct mlispExtractedPulse pulse)
+int mliesExtractedPulseVector_push_back(
+        struct mliesExtractedPulseVector *pulses,
+        const struct mliesExtractedPulse pulse)
 {
         mli_c(mliVector_push_back(&pulses->vector, &pulse));
         return 1;
@@ -56,10 +56,10 @@ int mlispExtractedPulseVector_push_back(
         return 0;
 }
 
-void mlispExtractedPulseVector_assign(
-    struct mlispExtractedPulseVector *pulses,
+void mliesExtractedPulseVector_assign(
+    struct mliesExtractedPulseVector *pulses,
     const uint64_t index,
-    const struct mlispExtractedPulse pulse)
+    const struct mliesExtractedPulse pulse)
 {
         mliVector_assign(&pulses->vector, index, &pulse);
 }

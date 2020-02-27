@@ -1,53 +1,53 @@
 /* Copyright 2020 Sebastian Achim Mueller */
-#ifndef MLISPPHOTONVECTOR_H_
-#define MLISPPHOTONVECTOR_H_
+#ifndef MLIESPHOTONVECTOR_H_
+#define MLIESPHOTONVECTOR_H_
 
 #include <stdint.h>
 #include "../merlict_c89/mliVector.h"
-#include "mlispPhoton.h"
+#include "mliesPhoton.h"
 
-struct mlispPhotonVector {
+struct mliesPhotonVector {
         struct mliVector vector;
 };
 
-struct mlispPhotonVector mlispPhotonVector_init()
+struct mliesPhotonVector mliesPhotonVector_init()
 {
-        struct mlispPhotonVector photons;
+        struct mliesPhotonVector photons;
         photons.vector = mliVector_init();
         return photons;
 }
 
-void mlispPhotonVector_free(struct mlispPhotonVector *photons)
+void mliesPhotonVector_free(struct mliesPhotonVector *photons)
 {
         mliVector_free(&photons->vector);
 }
 
-int mlispPhotonVector_malloc(
-        struct mlispPhotonVector *photons,
+int mliesPhotonVector_malloc(
+        struct mliesPhotonVector *photons,
         const uint64_t capcity)
 {
         mli_c(mliVector_malloc(
                 &photons->vector,
                 capcity,
-                sizeof(struct mlispPhoton)));
+                sizeof(struct mliesPhoton)));
         return 1;
   error:
         return 0;
 }
 
-struct mlispPhoton mlispPhotonVector_at(
-        const struct mlispPhotonVector *photons,
+struct mliesPhoton mliesPhotonVector_at(
+        const struct mliesPhotonVector *photons,
         const uint64_t idx)
 {
-        struct mlispPhoton spph = *(struct mlispPhoton*)mliVector_at(
+        struct mliesPhoton spph = *(struct mliesPhoton*)mliVector_at(
                 &photons->vector,
                 idx);
         return spph;
 }
 
-int mlispPhotonVector_push_back(
-        struct mlispPhotonVector *photons,
-        const struct mlispPhoton photon)
+int mliesPhotonVector_push_back(
+        struct mliesPhotonVector *photons,
+        const struct mliesPhoton photon)
 {
         mli_c(mliVector_push_back(&photons->vector, &photon));
         return 1;

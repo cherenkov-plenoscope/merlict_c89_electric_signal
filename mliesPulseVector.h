@@ -1,53 +1,53 @@
 /* Copyright 2020 Sebastian Achim Mueller */
-#ifndef MLISPPULSEVECTOR_H_
-#define MLISPPULSEVECTOR_H_
+#ifndef MLIESPULSEVECTOR_H_
+#define MLIESPULSEVECTOR_H_
 
 #include <stdint.h>
 #include "../merlict_c89/mliVector.h"
-#include "mlispPulse.h"
+#include "mliesPulse.h"
 
-struct mlispPulseVector {
+struct mliesPulseVector {
         struct mliVector vector;
 };
 
-struct mlispPulseVector mlispPulseVector_init()
+struct mliesPulseVector mliesPulseVector_init()
 {
-        struct mlispPulseVector pulses;
+        struct mliesPulseVector pulses;
         pulses.vector = mliVector_init();
         return pulses;
 }
 
-void mlispPulseVector_free(struct mlispPulseVector *pulses)
+void mliesPulseVector_free(struct mliesPulseVector *pulses)
 {
         mliVector_free(&pulses->vector);
 }
 
-int mlispPulseVector_malloc(
-        struct mlispPulseVector *pulses,
+int mliesPulseVector_malloc(
+        struct mliesPulseVector *pulses,
         const uint64_t capcity)
 {
         mli_c(mliVector_malloc(
                 &pulses->vector,
                 capcity,
-                sizeof(struct mlispPulse)));
+                sizeof(struct mliesPulse)));
         return 1;
   error:
         return 0;
 }
 
-struct mlispPulse mlispPulseVector_at(
-        const struct mlispPulseVector *pulses,
+struct mliesPulse mliesPulseVector_at(
+        const struct mliesPulseVector *pulses,
         const uint64_t idx)
 {
-        struct mlispPulse spph = *(struct mlispPulse*)mliVector_at(
+        struct mliesPulse spph = *(struct mliesPulse*)mliVector_at(
                 &pulses->vector,
                 idx);
         return spph;
 }
 
-int mlispPulseVector_push_back(
-        struct mlispPulseVector *pulses,
-        const struct mlispPulse pulse)
+int mliesPulseVector_push_back(
+        struct mliesPulseVector *pulses,
+        const struct mliesPulse pulse)
 {
         mli_c(mliVector_push_back(&pulses->vector, &pulse));
         return 1;

@@ -11,16 +11,16 @@ CASE("add pulse to electric pipeline with crosstalk") {
         uint64_t num_crosstalk_expected = 0;
         uint64_t num_crosstalk = 0;
         struct mliMT19937 prng = mliMT19937_init(0u);
-        struct mlispPulseVector electric_pipeline = mlispPulseVector_init();
+        struct mliesPulseVector electric_pipeline = mliesPulseVector_init();
 
-        CHECK(mlispPulseVector_malloc(&electric_pipeline, 0u));
+        CHECK(mliesPulseVector_malloc(&electric_pipeline, 0u));
 
         /* Add initial pulses, so the pipeline is not empty on start */
         for (i = 0; i < num_initial_pulses; i++) {
-                struct mlispPulse initial_pulse;
+                struct mliesPulse initial_pulse;
                 initial_pulse.arrival_time = 1.;
                 initial_pulse.simulation_truth_id = -1;
-                CHECK(mlispPulseVector_push_back(
+                CHECK(mliesPulseVector_push_back(
                         &electric_pipeline,
                         initial_pulse));
         }
@@ -28,10 +28,10 @@ CASE("add pulse to electric pipeline with crosstalk") {
 
         /* Add pulses which might trigger cross-talk */
         for (i = 0; i < N; i++) {
-                struct mlispPulse epulse;
+                struct mliesPulse epulse;
                 epulse.arrival_time = 1.;
                 epulse.simulation_truth_id = (int32_t)i;
-                CHECK(mlisp_converter_add_incoming_pulse(
+                CHECK(mlies_converter_add_incoming_pulse(
                         &electric_pipeline,
                         epulse,
                         probability_for_second_puls,
@@ -43,10 +43,10 @@ CASE("add pulse to electric pipeline with crosstalk") {
 
         num_crosstalk = 0;
         for (i = 0; i < electric_pipeline.vector.size; i++) {
-                struct mlispPulse ep = mlispPulseVector_at(
+                struct mliesPulse ep = mliesPulseVector_at(
                         &electric_pipeline,
                         i);
-                if (ep.simulation_truth_id == MLISP_CONVERTER_CROSSTALK) {
+                if (ep.simulation_truth_id == MLIES_CONVERTER_CROSSTALK) {
                         num_crosstalk++;
                 }
         }
@@ -58,5 +58,5 @@ CASE("add pulse to electric pipeline with crosstalk") {
                 electric_pipeline.vector.size - num_crosstalk ==
                 num_additional_pulses + num_initial_pulses);
 
-        mlispPulseVector_free(&electric_pipeline);
+        mliesPulseVector_free(&electric_pipeline);
 }

@@ -1,14 +1,14 @@
 /* Copyright 2020 Sebastian Achim Mueller */
-#ifndef MLISPPHOTONSTREAM_TEST_H_
-#define MLISPPHOTONSTREAM_TEST_H_
+#ifndef MLIESPHOTONSTREAM_TEST_H_
+#define MLIESPHOTONSTREAM_TEST_H_
 
-#include "mlispPhotonStream.h"
-#include "mlispPhotonStream_io.h"
+#include "mliesPhotonStream.h"
+#include "mliesPhotonStream_io.h"
 
 
-int mlisp_test_PhotonStream_is_equal_verbose(
-        const struct mlispPhotonStream *a,
-        const struct mlispPhotonStream *b)
+int mlies_test_PhotonStream_is_equal_verbose(
+        const struct mliesPhotonStream *a,
+        const struct mliesPhotonStream *b)
 {
         uint64_t ch, pu;
         mli_check(a->time_slice_duration == b->time_slice_duration,
@@ -23,11 +23,11 @@ int mlisp_test_PhotonStream_is_equal_verbose(
                         b->channels[ch].vector.size,
                         "num_channels not equal");
                 for (pu = 0; pu < a->channels[ch].vector.size; pu++) {
-                        struct mlispExtractedPulse exa, exb;
-                        exa = mlispExtractedPulseVector_at(
+                        struct mliesExtractedPulse exa, exb;
+                        exa = mliesExtractedPulseVector_at(
                                 &a->channels[ch],
                                 pu);
-                        exb = mlispExtractedPulseVector_at(
+                        exb = mliesExtractedPulseVector_at(
                                 &b->channels[ch],
                                 pu);
                         mli_check(
@@ -45,8 +45,8 @@ int mlisp_test_PhotonStream_is_equal_verbose(
         return 0;
 }
 
-int mlisp_test_PhotonStream_expose_poisson(
-        struct mlispPhotonStream *phs,
+int mlies_test_PhotonStream_expose_poisson(
+        struct mliesPhotonStream *phs,
         const double rate,
         const double exposure_time,
         struct mliMT19937 *prng)
@@ -61,13 +61,13 @@ int mlisp_test_PhotonStream_expose_poisson(
                         if (t + t_next > exposure_time) {
                                 break;
                         } else {
-                                struct mlispExtractedPulse expulse;
+                                struct mliesExtractedPulse expulse;
                                 t += t_next;
                                 expulse.arrival_time_slice = (int32_t)
                                         floor(t/phs->time_slice_duration);
                                 expulse.simulation_truth_id = (int32_t)
                                          1000*mliMT19937_uniform(prng);
-                                mli_c(mlispExtractedPulseVector_push_back(
+                                mli_c(mliesExtractedPulseVector_push_back(
                                         &phs->channels[ch],
                                         expulse));
                         }
@@ -78,7 +78,7 @@ int mlisp_test_PhotonStream_expose_poisson(
         return 0;
 }
 
-int mlisp_test_PhotonStream_expose_write_and_read_back(
+int mlies_test_PhotonStream_expose_write_and_read_back(
         const uint64_t num_channels,
         const uint64_t num_time_slices,
         const double time_slice_duration,
@@ -86,19 +86,19 @@ int mlisp_test_PhotonStream_expose_write_and_read_back(
         const double exposure_time,
         struct mliMT19937 *prng)
 {
-        struct mlispPhotonStream phs = mlispPhotonStream_init();
-        struct mlispPhotonStream phs_back = mlispPhotonStream_init();
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
+        struct mliesPhotonStream phs_back = mliesPhotonStream_init();
         phs.num_channels = num_channels;
         phs.time_slice_duration = time_slice_duration;
         phs.num_time_slices = num_time_slices;
-        mli_c(mlispPhotonStream_malloc(&phs));
-        mli_c(mlisp_test_PhotonStream_expose_poisson(
+        mli_c(mliesPhotonStream_malloc(&phs));
+        mli_c(mlies_test_PhotonStream_expose_poisson(
                 &phs,
                 single_pulse_rate,
                 exposure_time,
                 prng));
 
-        mli_c(mlispPhotonStream_write_to_pulsepath_and_truthpath(
+        mli_c(mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
                 "tests/"
                 "resources/"
@@ -107,7 +107,7 @@ int mlisp_test_PhotonStream_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mlispPhotonStream_malloc_from_path(
+        mli_c(mliesPhotonStream_malloc_from_path(
                 &phs_back,
                 "tests/"
                 "resources/"
@@ -116,10 +116,10 @@ int mlisp_test_PhotonStream_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mlisp_test_PhotonStream_is_equal_verbose(&phs, &phs_back));
+        mli_c(mlies_test_PhotonStream_is_equal_verbose(&phs, &phs_back));
 
-        mlispPhotonStream_free(&phs);
-        mlispPhotonStream_free(&phs_back);
+        mliesPhotonStream_free(&phs);
+        mliesPhotonStream_free(&phs_back);
 
         return 1;
     error:

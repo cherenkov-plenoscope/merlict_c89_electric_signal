@@ -1,5 +1,5 @@
-merlict_c89 single photon
-=========================
+merlict_c89 electric_signal
+===========================
 [![Build Status](https://travis-ci.org/cherenkov-plenoscope/merlict_development_kit.svg?branch=master)](https://travis-ci.org/cherenkov-plenoscope/merlict_c89)
 
 An add-on-library to ```merlict_c89```
