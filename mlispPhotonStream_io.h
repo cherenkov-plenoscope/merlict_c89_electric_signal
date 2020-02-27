@@ -24,7 +24,7 @@ int mlispPhotonStream_append_to_file(
 
         mli_write_type(double, phs->time_slice_duration, file);
         mli_write_type(uint64_t, phs->num_channels, file);
-        mli_write_type(uint64_t, MLISP_NUM_TIME_SLICES, file);
+        mli_write_type(uint64_t, phs->num_time_slices, file);
         mli_write_type(uint64_t, num_symbols, file);
 
         for (ch = 0; ch < phs->num_channels; ch++) {
@@ -84,7 +84,6 @@ int mlispPhotonStream_malloc_from_file(
         mli_fread(&phs->num_channels, sizeof(uint64_t), 1, file);
 
         mli_fread(&phs->num_time_slices, sizeof(uint64_t), 1, file);
-        mli_c(phs->num_time_slices == MLISP_NUM_TIME_SLICES);
 
         mli_fread(&num_symbols, sizeof(uint64_t), 1, file);
 
