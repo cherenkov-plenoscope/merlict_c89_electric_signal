@@ -61,4 +61,33 @@ uint64_t mlispPhotonStream_num_pulses(const struct mlispPhotonStream *phs) {
         return num_pulses;
 }
 
+void mlispPhotonStream_print(const struct mlispPhotonStream *phs)
+{
+        uint64_t ch, pu;
+        printf("Start photon-stream\n");
+        printf("    time_slice_duration: %Es\n", phs->time_slice_duration);
+        printf("    num_time_slices: %ld\n", phs->num_time_slices);
+        printf("    num_channels: %ld\n", phs->num_channels);
+        printf("    num_pulses: %ld\n", mlispPhotonStream_num_pulses(phs));
+        printf("    Channels:\n");
+        for (ch = 0; ch < phs->num_channels; ch++) {
+                printf("    % 6ld\n", ch);
+                printf("        [");
+                for (pu = 0; pu < phs->channels[ch].vector.size; pu++) {
+                        struct mlispExtractedPulse exa;
+                        exa = mlispExtractedPulseVector_at(
+                                &phs->channels[ch],
+                                pu);
+                        printf(
+                                "(%d, %d), ",
+                                exa.arrival_time_slice,
+                                exa.simulation_truth_id);
+                }
+                printf("]\n");
+        }
+
+        printf("END photon-stream\n");
+}
+
+
 #endif
