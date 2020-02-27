@@ -5,21 +5,23 @@
 #include "mlispPhotonStream.h"
 #include "mlispPhotonStream_io.h"
 
-int mlisp_test_PhotonStream_is_equal(
+
+int mlisp_test_PhotonStream_is_equal_verbose(
         const struct mlispPhotonStream *a,
-        const struct mlispPhotonStream *b,
-        const int check_simulation_truth)
+        const struct mlispPhotonStream *b)
 {
         uint64_t ch, pu;
-        if (a->time_slice_duration != b->time_slice_duration)
-                return -1;
-        if (a->num_time_slices != b->num_time_slices)
-                return -1;
-        if (a->num_channels != b->num_channels)
-                return -1;
+        mli_check(a->time_slice_duration == b->time_slice_duration,
+                "time_slice_duration not equal");
+        mli_check(a->num_time_slices == b->num_time_slices,
+                "num_time_slices not equal");
+        mli_check(a->num_channels == b->num_channels,
+                "num_channels not equal");
         for (ch = 0; ch < a->num_channels; ch++) {
-                if (a->channels[ch].vector.size != b->channels[ch].vector.size)
-                        return -1;
+                mli_check(
+                        a->channels[ch].vector.size ==
+                        b->channels[ch].vector.size,
+                        "num_channels not equal");
                 for (pu = 0; pu < a->channels[ch].vector.size; pu++) {
                         struct mlispExtractedPulse exa, exb;
                         exa = mlispExtractedPulseVector_at(
@@ -28,19 +30,19 @@ int mlisp_test_PhotonStream_is_equal(
                         exb = mlispExtractedPulseVector_at(
                                 &b->channels[ch],
                                 pu);
-                        if (exa.arrival_time_slice != exb.arrival_time_slice)
-                                return -1;
-                        if (check_simulation_truth) {
-                                if (
-                                        exa.simulation_truth_id !=
-                                        exb.simulation_truth_id)
-                                {
-                                        return -1;
-                                }
-                        }
+                        mli_check(
+                                exa.arrival_time_slice ==
+                                exb.arrival_time_slice,
+                                "arrival_time_slice not equal");
+                        mli_check(
+                                exa.simulation_truth_id ==
+                                exb.simulation_truth_id,
+                                "simulation_truth_id not equal");
                 }
         }
         return 1;
+    error:
+        return 0;
 }
 
 int mlisp_test_PhotonStream_expose_poisson(
@@ -114,7 +116,10 @@ int mlisp_test_PhotonStream_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mlisp_test_PhotonStream_is_equal(&phs, &phs_back, 1));
+        mli_c(mlisp_test_PhotonStream_is_equal_verbose(&phs, &phs_back));
+
+        mlispPhotonStream_free(&phs);
+        mlispPhotonStream_free(&phs_back);
 
         return 1;
     error:

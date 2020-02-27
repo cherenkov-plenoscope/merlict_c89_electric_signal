@@ -69,7 +69,6 @@ CASE("arrival_time_slices_below_next_channel_marker") {
         struct mlispPhotonStream phs_back = mlispPhotonStream_init();
         struct mlispExtractedPulse expulse = mlispExtractedPulse_init();
         struct mlispExtractedPulse expulse_back = mlispExtractedPulse_init();
-        const int CHECK_SIMULATION_TRUTH = 1;
 
         phs.num_channels = 1u;
         phs.num_time_slices = MLISP_NEXT_CHANNEL_MARKER;
@@ -109,10 +108,9 @@ CASE("arrival_time_slices_below_next_channel_marker") {
         CHECK(expulse_back.arrival_time_slice == expulse.arrival_time_slice);
         CHECK(expulse_back.simulation_truth_id == expulse.simulation_truth_id);
 
-        CHECK(mlisp_test_PhotonStream_is_equal(
+        CHECK(mlisp_test_PhotonStream_is_equal_verbose(
                 &phs,
-                &phs_back,
-                CHECK_SIMULATION_TRUTH));
+                &phs_back));
 
         mlispPhotonStream_free(&phs);
         mlispPhotonStream_free(&phs_back);
