@@ -2,7 +2,7 @@
 /* Compile with:                                                              */
 /* gcc test_main.c -o test -std=c89 -lm -Wall -pedantic    */
 #include "../merlict_c89/mli_testing.h"
-#include "mli_single_photon.h"
+#include "merlict_c89_electric_signal.h"
 
 
 int main(int argc, char *argv[]) {
