@@ -88,7 +88,6 @@ void mliesExtractChannels_assign(
         mliVector_assign(&phs->channels[channel], index, &expulse);
 }
 
-
 uint64_t mliesExtractChannels_num_pulses(const struct mliesExtractChannels *phs)
 {
         uint64_t num_pulses = 0u;

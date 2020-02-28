@@ -25,7 +25,7 @@
  *  CORSIKA-Cherenkov-photon
  *
  *     |
- *     |        convert geometry, arrival-time, and wavelength
+ *     |        adopt geometry, arrival-time, and wavelength
  *     V
  *
  *  mliPhoton
@@ -86,7 +86,6 @@ error:
         return 0;
 }
 
-
 int mlies_converter_add_internal_poisson_accidentals(
         struct mliVector *out_electric_pipeline,
         const double rate,
@@ -111,7 +110,6 @@ int mlies_converter_add_internal_poisson_accidentals(
 error:
         return 0;
 }
-
 
 int mlies_photo_electric_convert(
         const struct mliVector *photon_pipeline,
@@ -156,7 +154,6 @@ error:
         return 0;
 }
 
-
 int mlies_extract_pulses(
         const struct mliVector *pulse_channel,
         struct mliVector *out_extracted_pulse_channel,
@@ -165,6 +162,7 @@ int mlies_extract_pulses(
         const double extractor_arrival_time_std,
         struct mliMT19937 *prng)
 {
+        const double zero_arrival_time_shift = 0.0;
         uint64_t p;
         for (p = 0; p < pulse_channel->size; p++) {
                 struct mliesPulse pulse = *(struct mliesPulse *)mliVector_at(
@@ -175,7 +173,7 @@ int mlies_extract_pulses(
                         pulse.arrival_time +
                         mliMT19937_normal_Irwin_Hall_approximation(
                                 prng,
-                                0.0f,
+                                zero_arrival_time_shift,
                                 extractor_arrival_time_std));
                 const int64_t slice = mli_near_int(
                         reconstructed_arrival_time/
