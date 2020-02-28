@@ -11,20 +11,30 @@
 #include "mlies_constants.h"
 
 #include "mliesPhoton.h"
-#include "mliesPhotonVector.h"
+#include "mliesPhotonChannels.h"
 
 #include "mliesPulse.h"
-#include "mliesPulseVector.h"
+#include "mliesPulseChannels.h"
 
-#include "mliesExtractedPulse.h"
-#include "mliesExtractedPulseVector.h"
-
-#include "mliesPhotonStream.h"
-#include "mliesPhotonStream_io.h"
-#include "mliesPhotonStream_test.h"
+#include "mliesExtract.h"
+#include "mliesExtractChannels.h"
+#include "mliesExtractChannels_io.h"
+#include "mliesExtractChannels_test.h"
 
 /*
+ *  CORSIKA-Cherenkov-photon
+ *
+ *     |
+ *     |        convert geometry, arrival-time, and wavelength
+ *     V
+ *
  *  mliPhoton
+ *
+ *     |
+ *     |        Propagate photon in scenery. Bounce around, and get absorbed.
+ *     V
+ *
+ *  mliPhotonHistory
  *
  *     |
  *     |        strip away support-vector, and direction-vector
@@ -34,6 +44,7 @@
  *
  *     |        photo-electric-converter
  *     |        strip away wavelength
+       |                 quantum-detection-efficiency vs. wavelength
  *     V
  *
  *  mliesPulse
@@ -42,20 +53,24 @@
  *     |        assign to time-slice
  *     V
  *
- *  mliesExtractedPulse
+ *  mliesExtract
+ *
+ *     |
+ *     |        write photon-stream-format
+ *     V
+ *
+ *   write FILE
  *
  */
 
 
 int mlies_converter_add_incoming_pulse(
-        struct mliesPulseVector *out_electric_pipeline,
+        struct mliVector *out_electric_pipeline,
         const struct mliesPulse incoming_pulse,
         const double converter_crosstalk_probability,
         struct mliMT19937 *prng)
 {
-        mli_c(mliesPulseVector_push_back(
-                out_electric_pipeline,
-                incoming_pulse));
+        mli_c(mliVector_push_back(out_electric_pipeline, &incoming_pulse));
         if (converter_crosstalk_probability >= mliMT19937_uniform(prng)) {
                 struct mliesPulse crosstalk_pulse;
                 crosstalk_pulse.arrival_time = incoming_pulse.arrival_time;
@@ -73,7 +88,7 @@ error:
 
 
 int mlies_converter_add_internal_poisson_accidentals(
-        struct mliesPulseVector *out_electric_pipeline,
+        struct mliVector *out_electric_pipeline,
         const double rate,
         const double exposure_time,
         const double converter_crosstalk_probability,
@@ -99,8 +114,8 @@ error:
 
 
 int mlies_photo_electric_convert(
-        const struct mliesPhotonVector *photon_pipeline,
-        struct mliesPulseVector *out_electric_pipeline,
+        const struct mliVector *photon_pipeline,
+        struct mliVector *out_electric_pipeline,
         const double exposure_time,
         const struct mliFunc *converter_quantum_efficiency_vs_wavelength,
         const double converter_dark_rate,
@@ -108,9 +123,9 @@ int mlies_photo_electric_convert(
         struct mliMT19937 *prng)
 {
         uint64_t i;
-        for (i = 0; i < photon_pipeline->vector.size; i++) {
+        for (i = 0; i < photon_pipeline->size; i++) {
 
-                struct mliesPhoton ph = mliesPhotonVector_at(
+                struct mliesPhoton ph = *(struct mliesPhoton *)mliVector_at(
                         photon_pipeline,
                         i);
 
@@ -143,16 +158,18 @@ error:
 
 
 int mlies_extract_pulses(
-        const struct mliesPulseVector *pulses,
-        struct mliesExtractedPulseVector *out_extracted_pulses,
+        const struct mliVector *pulse_channel,
+        struct mliVector *out_extracted_pulse_channel,
         const double time_slice_duration,
         const uint64_t max_num_time_slices,
         const double extractor_arrival_time_std,
         struct mliMT19937 *prng)
 {
         uint64_t p;
-        for (p = 0; p < pulses->vector.size; p++) {
-                struct mliesPulse pulse = mliesPulseVector_at(pulses, p);
+        for (p = 0; p < pulse_channel->size; p++) {
+                struct mliesPulse pulse = *(struct mliesPulse *)mliVector_at(
+                        pulse_channel,
+                        p);
 
                 const double reconstructed_arrival_time = (
                         pulse.arrival_time +
@@ -165,14 +182,39 @@ int mlies_extract_pulses(
                         time_slice_duration);
 
                 if (slice >= 0 && slice < (int64_t)max_num_time_slices) {
-                        struct mliesExtractedPulse extracted_pulse;
+                        struct mliesExtract extracted_pulse;
                         extracted_pulse.simulation_truth_id = pulse.
                                 simulation_truth_id;
                         extracted_pulse.arrival_time_slice = (uint8_t)slice;
-                        mli_c(mliesExtractedPulseVector_push_back(
-                                out_extracted_pulses,
-                                extracted_pulse));
+                        mli_c(mliVector_push_back(
+                                out_extracted_pulse_channel,
+                                &extracted_pulse));
                 }
+        }
+        return 1;
+error:
+        return 0;
+}
+
+int mlies_append_equi_distant_photons(
+        struct mliVector *photon_channel,
+        const double wavelength,
+        const double start_time,
+        const double stop_time,
+        const uint64_t num_photons)
+{
+        uint64_t i;
+        const double range = stop_time - start_time;
+        const double step = range/(double)(num_photons - 1u);
+        mli_check(range > 0., "Expect start before stop");
+        for (i = 0; i < num_photons; i++) {
+                struct mliesPhoton ph;
+                ph.arrival_time = (double)i*step;
+                ph.wavelength = 433e-9;
+                ph.simulation_truth_id = i;
+                mli_c(mliVector_push_back(
+                        photon_channel,
+                        &ph));
         }
         return 1;
 error:

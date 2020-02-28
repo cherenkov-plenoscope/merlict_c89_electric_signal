@@ -14,7 +14,7 @@ CASE("init ElectricPulse") {
 }
 
 CASE("init ExtractedPulse") {
-        struct mliesExtractedPulse expu = mliesExtractedPulse_init();
+        struct mliesExtract expu = mliesExtract_init();
         CHECK(expu.simulation_truth_id == MLIES_DEFAULT_SIMULATION_TRUTH);
         CHECK(expu.arrival_time_slice == 0u);
 }
