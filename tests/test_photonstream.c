@@ -1,27 +1,28 @@
 /* Copyright 2019-2020 Sebastian Achim Mueller                                */
 
 CASE("init ExtractChannels") {
-        struct mliesExtractChannels phs = mliesExtractChannels_init();
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
+        CHECK(phs.num_time_slices == 0);
         CHECK(phs.time_slice_duration == 0.);
-        CHECK(phs.num_channels == 0u);
-        CHECK(phs.channels == NULL);
+        CHECK(phs.stream.num_channels == 0u);
+        CHECK(phs.stream.channels == NULL);
 }
 
 CASE("malloc ExtractChannels") {
-        struct mliesExtractChannels phs = mliesExtractChannels_init();
-        CHECK(mliesExtractChannels_malloc(&phs, 12u));
-        CHECK(phs.num_channels == 12u);
-        mliesExtractChannels_free(&phs);
-        CHECK(phs.num_channels == 0u);
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
+        CHECK(mliesPhotonStream_malloc(&phs, 12u));
+        CHECK(phs.stream.num_channels == 12u);
+        mliesPhotonStream_free(&phs);
+        CHECK(phs.stream.num_channels == 0u);
 }
 
 CASE("num_pulses ExtractChannels") {
-        uint64_t num_channel_scenarios = 3;
-        uint64_t channel_scenarios[3] = {0, 1, 10};
+        uint64_t num_channel_scenarios = 7;
+        uint64_t channel_scenarios[7] = {0, 1, 10, 100, 3, 4, 5};
         uint64_t chsc = 0;
 
-        uint64_t num_pulse_scenarios = 4;
-        uint64_t pulse_scenarios[4] = {0, 1, 10, 50};
+        uint64_t num_pulse_scenarios = 9;
+        uint64_t pulse_scenarios[9] = {0, 1, 10, 50, 0, 3, 64, 12, 1337};
         uint64_t pusc = 0;
 
         for (
@@ -41,46 +42,50 @@ CASE("num_pulses ExtractChannels") {
                                 pulse_scenarios[pusc];
 
                         struct mliesExtract ex;
-                        struct mliesExtractChannels phs =
-                                mliesExtractChannels_init();
-                        CHECK(mliesExtractChannels_malloc(
+                        struct mliesPhotonStream phs = mliesPhotonStream_init();
+
+                        CHECK(mliesPhotonStream_malloc(
                                 &phs,
                                 channel_scenarios[chsc]));
-                        CHECK(phs.num_channels == channel_scenarios[chsc]);
+                        CHECK(
+                                phs.stream.num_channels ==
+                                channel_scenarios[chsc]);
 
-                        for (c = 0; c < channel_scenarios[chsc]; c++) {
+                        for (c = 0; c < phs.stream.num_channels; c++) {
                                 for (p = 0; p < pulse_scenarios[pusc]; p++) {
                                         ex.simulation_truth_id = p + 1 + c;
                                         ex.arrival_time_slice = p + c;
-                                        mliesExtractChannels_push_back(
-                                                &phs, 0, ex);
+                                        CHECK(mliesDynExtract_push_back(
+                                                &phs.stream.channels[c],
+                                                &ex));
                                 }
                         }
 
                         CHECK(
-                                mliesExtractChannels_num_pulses(&phs) ==
+                                mliesExtractChannels_total_num(&phs.stream) ==
                                 expected_num_pulses);
-                        mliesExtractChannels_free(&phs);
+                        mliesPhotonStream_free(&phs);
                 }
         }
 }
 
 CASE("arrival_time_slices_below_next_channel_marker") {
-        struct mliesExtractChannels phs = mliesExtractChannels_init();
-        struct mliesExtractChannels phs_back = mliesExtractChannels_init();
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
+        struct mliesPhotonStream phs_back = mliesPhotonStream_init();
         struct mliesExtract expulse = mliesExtract_init();
         struct mliesExtract expulse_back = mliesExtract_init();
+        const uint64_t ch = 0;
 
         phs.num_time_slices = MLIES_NEXT_CHANNEL_MARKER;
         phs.time_slice_duration = 500e-12;
-        CHECK(mliesExtractChannels_malloc(&phs, 1u));
+        CHECK(mliesPhotonStream_malloc(&phs, 1u));
 
         expulse.arrival_time_slice = 254u;
         expulse.simulation_truth_id = 0;
 
-        CHECK(mliesExtractChannels_push_back(&phs, 0, expulse));
+        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], &expulse));
 
-        CHECK(mliesExtractChannels_write_to_pulsepath_and_truthpath(
+        CHECK(mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
                 "tests/"
                 "resources/"
@@ -89,7 +94,7 @@ CASE("arrival_time_slices_below_next_channel_marker") {
                 "resources/"
                 "arrival_time_slices_below_next_channel_marker.phs.truth.tmp"));
 
-        CHECK(mliesExtractChannels_malloc_from_path(
+        CHECK(mliesPhotonStream_malloc_from_path(
                 &phs_back,
                 "tests/"
                 "resources/"
@@ -98,34 +103,33 @@ CASE("arrival_time_slices_below_next_channel_marker") {
                 "resources/"
                 "arrival_time_slices_below_next_channel_marker.phs.truth.tmp"));
 
-        CHECK(phs_back.num_channels == phs.num_channels);
-        expulse_back = mliesExtractChannels_at(&phs_back, 0, 0);
+        CHECK(phs_back.stream.num_channels == phs.stream.num_channels);
+        expulse_back = phs_back.stream.channels[ch].arr[0];
 
         CHECK(expulse_back.arrival_time_slice == expulse.arrival_time_slice);
         CHECK(expulse_back.simulation_truth_id == expulse.simulation_truth_id);
 
-        CHECK(mlies_test_ExtractChannels_is_equal_verbose(
-                &phs,
-                &phs_back));
+        CHECK(mliesPhotonStream_is_equal_verbose(&phs, &phs_back));
 
-        mliesExtractChannels_free(&phs);
-        mliesExtractChannels_free(&phs_back);
+        mliesPhotonStream_free(&phs);
+        mliesPhotonStream_free(&phs_back);
 }
 
 CASE("arrival_slices_must_not_be_NEXT_CHANNEL_MARKER") {
-        struct mliesExtractChannels phs = mliesExtractChannels_init();
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
         struct mliesExtract expulse = mliesExtract_init();
         const int32_t simulation_truth_id = 1337;
+        const uint64_t ch = 0;
         int64_t rc;
         phs.num_time_slices = MLIES_NEXT_CHANNEL_MARKER;
         phs.time_slice_duration = 500e-12;
-        CHECK(mliesExtractChannels_malloc(&phs, 1u));
+        CHECK(mliesPhotonStream_malloc(&phs, 1u));
 
         expulse.simulation_truth_id = simulation_truth_id;
         expulse.arrival_time_slice = MLIES_NEXT_CHANNEL_MARKER;
-        CHECK(mliesExtractChannels_push_back(&phs, 0, expulse));
+        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], &expulse));
 
-        rc = mliesExtractChannels_write_to_pulsepath_and_truthpath(
+        rc = mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
                 "tests/"
                 "resources/"
@@ -136,9 +140,9 @@ CASE("arrival_slices_must_not_be_NEXT_CHANNEL_MARKER") {
         CHECK(rc < 1);
 
         expulse.arrival_time_slice = MLIES_NEXT_CHANNEL_MARKER - 1;
-        mliesExtractChannels_assign(&phs, 0, 0, expulse);
+        phs.stream.channels[ch].arr[0] = expulse;
 
-        rc = mliesExtractChannels_write_to_pulsepath_and_truthpath(
+        rc = mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
                 "tests/"
                 "resources/"
@@ -148,7 +152,7 @@ CASE("arrival_slices_must_not_be_NEXT_CHANNEL_MARKER") {
                 "fine.phs.truth.tmp");
         CHECK(rc);
 
-        mliesExtractChannels_free(&phs);
+        mliesPhotonStream_free(&phs);
 }
 
 CASE("write_and_read_back_full_single_pulse_event") {

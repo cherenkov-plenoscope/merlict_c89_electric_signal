@@ -8,12 +8,13 @@
 
 #define MLIES_PHOTON_STREAM_FORMAT_VERSION 20200226
 
-int mliesExtractChannels_append_to_file(
-        const struct mliesExtractChannels *phs,
+int mliesPhotonStream_append_to_file(
+        const struct mliesPhotonStream *phs,
         FILE *file)
 {
         const uint64_t num_symbols =
-                mliesExtractChannels_num_pulses(phs) + phs->num_channels;
+                mliesExtractChannels_total_num(&phs->stream) +
+                phs->stream.num_channels;
         uint64_t ch, pu;
         /* Header */
         mli_write_type(uint8_t, 'P', file);
@@ -23,14 +24,14 @@ int mliesExtractChannels_append_to_file(
         mli_write_type(uint64_t, MLIES_PHOTON_STREAM_FORMAT_VERSION, file);
 
         mli_write_type(double, phs->time_slice_duration, file);
-        mli_write_type(uint64_t, phs->num_channels, file);
+        mli_write_type(uint64_t, phs->stream.num_channels, file);
         mli_write_type(uint64_t, phs->num_time_slices, file);
         mli_write_type(uint64_t, num_symbols, file);
 
-        for (ch = 0; ch < phs->num_channels; ch++) {
-                for (pu = 0; pu < phs->channels[ch].size; pu++) {
+        for (ch = 0; ch < phs->stream.num_channels; ch++) {
+                for (pu = 0; pu < phs->stream.channels[ch].dyn.size; pu++) {
                         struct mliesExtract expulse =
-                                mliesExtractChannels_at(phs, ch, pu);
+                                phs->stream.channels[ch].arr[pu];
                         mli_check(
                                 expulse.arrival_time_slice !=
                                 MLIES_NEXT_CHANNEL_MARKER,
@@ -51,8 +52,8 @@ int mliesExtractChannels_append_to_file(
         return 0;
 }
 
-int mliesExtractChannels_malloc_from_file(
-    struct mliesExtractChannels *phs,
+int mliesPhotonStream_malloc_from_file(
+    struct mliesPhotonStream *phs,
     FILE *file)
 {
         uint8_t temp_char = 0;
@@ -63,7 +64,7 @@ int mliesExtractChannels_malloc_from_file(
         uint64_t symbol = 0;
         uint64_t i = 0;
 
-        mliesExtractChannels_free(phs);
+        mliesExtractChannels_free(&phs->stream);
 
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
         mli_check(temp_char == 'P', "Expected char[0] to be 'P'.");
@@ -86,7 +87,7 @@ int mliesExtractChannels_malloc_from_file(
 
         mli_fread(&num_symbols, sizeof(uint64_t), 1, file);
 
-        mli_c(mliesExtractChannels_malloc(phs, num_channels));
+        mli_c(mliesExtractChannels_malloc(&phs->stream, num_channels));
 
         channel = 0;
         for (i = 0; i < num_symbols; i++) {
@@ -96,10 +97,9 @@ int mliesExtractChannels_malloc_from_file(
                 } else {
                         struct mliesExtract expulse;
                         expulse.arrival_time_slice = symbol;
-                        mli_c(mliesExtractChannels_push_back(
-                            phs,
-                            channel,
-                            expulse));
+                        mli_c(mliesDynExtract_push_back(
+                            &phs->stream.channels[channel],
+                            &expulse));
                 }
         }
         return 1;
@@ -107,21 +107,19 @@ int mliesExtractChannels_malloc_from_file(
         return 0;
 }
 
-int mliesExtractChannels_read_simulation_truth_from_file(
-        struct mliesExtractChannels *phs,
+int mliesPhotonStream_read_simulation_truth_from_file(
+        struct mliesPhotonStream *phs,
         FILE *file)
 {
         uint64_t ch, pu;
-        for (ch = 0; ch < phs->num_channels; ch++) {
-                for (pu = 0; pu < phs->channels[ch].size; pu++) {
-                        struct mliesExtract expulse =
-                                mliesExtractChannels_at(phs, ch, pu);
+        for (ch = 0; ch < phs->stream.num_channels; ch++) {
+                for (pu = 0; pu < phs->stream.channels[ch].dyn.size; pu++) {
                         mli_fread(
-                                &expulse.simulation_truth_id,
+                                &phs->stream.channels[ch].arr[pu].
+                                    simulation_truth_id,
                                 sizeof(int32_t),
                                 1,
                                 file);
-                        mliesExtractChannels_assign(phs, ch, pu, expulse);
                 }
         }
 
@@ -130,15 +128,15 @@ int mliesExtractChannels_read_simulation_truth_from_file(
         return 0;
 }
 
-int mliesExtractChannels_append_simulation_truth_to_file(
-        const struct mliesExtractChannels *phs,
+int mliesPhotonStream_append_simulation_truth_to_file(
+        const struct mliesPhotonStream *phs,
         FILE *file)
 {
         uint64_t ch, pu;
-        for (ch = 0; ch < phs->num_channels; ch++) {
-                for (pu = 0; pu < phs->channels[ch].size; pu++) {
+        for (ch = 0; ch < phs->stream.num_channels; ch++) {
+                for (pu = 0; pu < phs->stream.channels[ch].dyn.size; pu++) {
                         struct mliesExtract expulse =
-                                mliesExtractChannels_at(phs, ch, pu);
+                            phs->stream.channels[ch].arr[pu];
                         mli_write_type(
                                 int32_t,
                                 expulse.simulation_truth_id,
@@ -150,21 +148,21 @@ int mliesExtractChannels_append_simulation_truth_to_file(
         return 0;
 }
 
-int mliesExtractChannels_write_to_pulsepath_and_truthpath(
-        struct mliesExtractChannels *phs,
+int mliesPhotonStream_write_to_pulsepath_and_truthpath(
+        struct mliesPhotonStream *phs,
         const char *pulsepath,
         const char *truthpath)
 {
         FILE *f;
         f = fopen(pulsepath, "w");
         mli_check(f != NULL, "Can not open ExtractChannels for writing.");
-        mli_check(mliesExtractChannels_append_to_file(phs, f),
+        mli_check(mliesPhotonStream_append_to_file(phs, f),
                 "Failed to write ExtractChannels to file.");
         fclose(f);
 
         f = fopen(truthpath, "w");
         mli_check(f != NULL, "Can not open ExtractChannels-truth for writing.");
-        mli_check(mliesExtractChannels_append_simulation_truth_to_file(phs, f),
+        mli_check(mliesPhotonStream_append_simulation_truth_to_file(phs, f),
                 "Failed to write ExtractChannels-truth to file.");
         fclose(f);
 
@@ -176,8 +174,8 @@ int mliesExtractChannels_write_to_pulsepath_and_truthpath(
         return 0;
 }
 
-int mliesExtractChannels_malloc_from_path(
-        struct mliesExtractChannels *phs,
+int mliesPhotonStream_malloc_from_path(
+        struct mliesPhotonStream *phs,
         const char *pulsepath,
         const char *truthpath)
 {
@@ -185,14 +183,14 @@ int mliesExtractChannels_malloc_from_path(
         f = fopen(pulsepath, "r");
         mli_check(f != NULL, "Can not open ExtractChannels for reading.");
         mli_check(
-                mliesExtractChannels_malloc_from_file(phs, f),
+                mliesPhotonStream_malloc_from_file(phs, f),
                 "Failed to read ExtractChannels from file.");
         fclose(f);
 
         f = fopen(truthpath, "r");
         mli_check(f != NULL, "Can not open ExtractChannels-truth for reading.");
         mli_check(
-                mliesExtractChannels_read_simulation_truth_from_file(phs, f),
+                mliesPhotonStream_read_simulation_truth_from_file(phs, f),
                 "Failed to read ExtractChannels-truth from file.");
         fclose(f);
 
@@ -201,7 +199,7 @@ int mliesExtractChannels_malloc_from_path(
         if (f != NULL) {
                 fclose(f);
         }
-        mliesExtractChannels_free(phs);
+        mliesExtractChannels_free(&phs->stream);
         return 0;
 }
 

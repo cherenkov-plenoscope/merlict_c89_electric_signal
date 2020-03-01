@@ -16,17 +16,14 @@ CASE("truncate_invalid_arrival_times") {
                 struct mliesPulse pulse;
                 pulse.arrival_time = time_slice_duration*(double)i;
                 pulse.simulation_truth_id = 0;
-                CHECK(mliVector_push_back(&pulses.channels[0], &pulse));
+                CHECK(mliesDynPulse_push_back(&pulses.channels[0], &pulse));
         }
 
         num_invalid_photons = 0u;
-        for (p = 0; p < pulses.channels[0].size; p++) {
-                struct mliesPulse pulse = *(struct mliesPulse *)mliVector_at(
-                        &pulses.channels[0],
-                        p);
+        for (p = 0; p < pulses.channels[0].dyn.size; p++) {
                 int32_t slice = mli_near_int(
-                    pulse.arrival_time/time_slice_duration);
-
+                    pulses.channels[0].arr[p].arrival_time/
+                    time_slice_duration);
                 if (slice < 0 || slice >= MLIES_NUM_TIME_SLICES) {
                         num_invalid_photons++;
                 }
@@ -43,13 +40,10 @@ CASE("truncate_invalid_arrival_times") {
                 arrival_time_std,
                 &prng));
 
-        CHECK(pulses.channels[0].size != extracts.channels[0].size);
+        CHECK(pulses.channels[0].dyn.size != extracts.channels[0].dyn.size);
         num_passing_photons = 0;
-        for (p = 0; p < extracts.channels[0].size; p++) {
-                struct mliesExtract expulse;
-                expulse = *(struct mliesExtract *)mliVector_at(
-                    &extracts.channels[0],
-                    p);
+        for (p = 0; p < extracts.channels[0].dyn.size; p++) {
+                struct mliesExtract expulse = extracts.channels[0].arr[p];
                 CHECK(255 > expulse.arrival_time_slice);
                 num_passing_photons++;
         }
@@ -78,7 +72,7 @@ CASE("arrival_time_std") {
             struct mliesPulse pulse;
             pulse.arrival_time = true_arrival_time;
             pulse.simulation_truth_id = i;
-            CHECK(mliVector_push_back(&pulses.channels[0], &pulse));
+            CHECK(mliesDynPulse_push_back(&pulses.channels[0], &pulse));
         }
 
         CHECK(mliesExtractChannels_malloc(&extracts, 1u));
@@ -91,14 +85,11 @@ CASE("arrival_time_std") {
                 arrival_time_std,
                 &prng));
 
-        num_reco = extracts.channels[0].size;
+        num_reco = extracts.channels[0].dyn.size;
         reconstructed_arrival_times = (double *)malloc(sizeof(double)*num_reco);
         CHECK(reconstructed_arrival_times);
         for (i = 0; i < num_reco; i++) {
-                struct mliesExtract expulse;
-                expulse = *(struct mliesExtract *)mliVector_at(
-                    &extracts.channels[0],
-                    i);
+                struct mliesExtract expulse = extracts.channels[0].arr[i];
                 reconstructed_arrival_times[i] = (
                     (double)expulse.arrival_time_slice*
                     time_slice_duration);

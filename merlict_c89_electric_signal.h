@@ -65,12 +65,12 @@
 
 
 int mlies_converter_add_incoming_pulse(
-        struct mliVector *out_electric_pipeline,
+        struct mliesDynPulse *out_electric_pipeline,
         const struct mliesPulse incoming_pulse,
         const double converter_crosstalk_probability,
         struct mliMT19937 *prng)
 {
-        mli_c(mliVector_push_back(out_electric_pipeline, &incoming_pulse));
+        mli_c(mliesDynPulse_push_back(out_electric_pipeline, &incoming_pulse));
         if (converter_crosstalk_probability >= mliMT19937_uniform(prng)) {
                 struct mliesPulse crosstalk_pulse;
                 crosstalk_pulse.arrival_time = incoming_pulse.arrival_time;
@@ -87,7 +87,7 @@ error:
 }
 
 int mlies_converter_add_internal_poisson_accidentals(
-        struct mliVector *out_electric_pipeline,
+        struct mliesDynPulse *out_electric_pipeline,
         const double rate,
         const double exposure_time,
         const double converter_crosstalk_probability,
@@ -111,9 +111,15 @@ error:
         return 0;
 }
 
+struct mliesConverter {
+        double dark_rate;
+        double crosstalk_probability;
+        const struct mliFunc *quantum_efficiency_vs_wavelength;
+};
+
 int mlies_photo_electric_convert(
         const struct mliVector *photon_pipeline,
-        struct mliVector *out_electric_pipeline,
+        struct mliesDynPulse *out_electric_pipeline,
         const double exposure_time,
         const struct mliFunc *converter_quantum_efficiency_vs_wavelength,
         const double converter_dark_rate,
@@ -155,8 +161,8 @@ error:
 }
 
 int mlies_extract_pulses(
-        const struct mliVector *pulse_channel,
-        struct mliVector *out_extracted_pulse_channel,
+        const struct mliesDynPulse *pulse_channel,
+        struct mliesDynExtract *out_extracted_pulse_channel,
         const double time_slice_duration,
         const uint64_t max_num_time_slices,
         const double extractor_arrival_time_std,
@@ -164,10 +170,8 @@ int mlies_extract_pulses(
 {
         const double zero_arrival_time_shift = 0.0;
         uint64_t p;
-        for (p = 0; p < pulse_channel->size; p++) {
-                struct mliesPulse pulse = *(struct mliesPulse *)mliVector_at(
-                        pulse_channel,
-                        p);
+        for (p = 0; p < pulse_channel->dyn.size; p++) {
+                struct mliesPulse pulse = pulse_channel->arr[p];
 
                 const double reconstructed_arrival_time = (
                         pulse.arrival_time +
@@ -184,7 +188,7 @@ int mlies_extract_pulses(
                         extracted_pulse.simulation_truth_id = pulse.
                                 simulation_truth_id;
                         extracted_pulse.arrival_time_slice = (uint8_t)slice;
-                        mli_c(mliVector_push_back(
+                        mli_c(mliesDynExtract_push_back(
                                 out_extracted_pulse_channel,
                                 &extracted_pulse));
                 }

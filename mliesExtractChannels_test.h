@@ -6,24 +6,26 @@
 #include "mliesExtractChannels_io.h"
 
 
-int mlies_test_ExtractChannels_is_equal_verbose(
-        const struct mliesExtractChannels *a,
-        const struct mliesExtractChannels *b)
+int mliesPhotonStream_is_equal_verbose(
+        const struct mliesPhotonStream *a,
+        const struct mliesPhotonStream *b)
 {
         uint64_t ch, pu;
         mli_check(a->time_slice_duration == b->time_slice_duration,
                 "time_slice_duration not equal");
         mli_check(a->num_time_slices == b->num_time_slices,
                 "num_time_slices not equal");
-        mli_check(a->num_channels == b->num_channels,
+        mli_check(a->stream.num_channels == b->stream.num_channels,
                 "num_channels not equal");
-        for (ch = 0; ch < a->num_channels; ch++) {
-                mli_check(a->channels[ch].size == b->channels[ch].size,
+        for (ch = 0; ch < a->stream.num_channels; ch++) {
+                mli_check(
+                        a->stream.channels[ch].dyn.size ==
+                        b->stream.channels[ch].dyn.size,
                         "num_channels not equal");
-                for (pu = 0; pu < a->channels[ch].size; pu++) {
+                for (pu = 0; pu < a->stream.channels[ch].dyn.size; pu++) {
                         struct mliesExtract exa, exb;
-                        exa = mliesExtractChannels_at(a, ch, pu);
-                        exb = mliesExtractChannels_at(b, ch, pu);
+                        exa = a->stream.channels[ch].arr[pu];
+                        exb = b->stream.channels[ch].arr[pu];
                         mli_check(
                                 exa.arrival_time_slice ==
                                 exb.arrival_time_slice,
@@ -39,14 +41,14 @@ int mlies_test_ExtractChannels_is_equal_verbose(
         return 0;
 }
 
-int mlies_test_ExtractChannels_expose_poisson(
-        struct mliesExtractChannels *phs,
+int mliesPhotonStream_expose_poisson(
+        struct mliesPhotonStream *phs,
         const double rate,
         const double exposure_time,
         struct mliMT19937 *prng)
 {
         uint64_t ch;
-        for (ch = 0; ch < phs->num_channels; ch++) {
+        for (ch = 0; ch < phs->stream.num_channels; ch++) {
                 double t = 0.0;
                 while (1) {
                         const double t_next = mliMT19937_expovariate(
@@ -61,8 +63,9 @@ int mlies_test_ExtractChannels_expose_poisson(
                                         floor(t/phs->time_slice_duration);
                                 expulse.simulation_truth_id = (int32_t)
                                          1000*mliMT19937_uniform(prng);
-                                mli_c(mliesExtractChannels_push_back(
-                                        phs, ch, expulse));
+                                mli_c(mliesDynExtract_push_back(
+                                        &phs->stream.channels[ch],
+                                        &expulse));
                         }
                 }
         }
@@ -79,18 +82,18 @@ int mlies_test_ExtractChannels_expose_write_and_read_back(
         const double exposure_time,
         struct mliMT19937 *prng)
 {
-        struct mliesExtractChannels phs = mliesExtractChannels_init();
-        struct mliesExtractChannels phs_back = mliesExtractChannels_init();
+        struct mliesPhotonStream phs = mliesPhotonStream_init();
+        struct mliesPhotonStream phs_back = mliesPhotonStream_init();
         phs.time_slice_duration = time_slice_duration;
         phs.num_time_slices = num_time_slices;
-        mli_c(mliesExtractChannels_malloc(&phs, num_channels));
-        mli_c(mlies_test_ExtractChannels_expose_poisson(
+        mli_c(mliesPhotonStream_malloc(&phs, num_channels));
+        mli_c(mliesPhotonStream_expose_poisson(
                 &phs,
                 single_pulse_rate,
                 exposure_time,
                 prng));
 
-        mli_c(mliesExtractChannels_write_to_pulsepath_and_truthpath(
+        mli_c(mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
                 "tests/"
                 "resources/"
@@ -99,7 +102,7 @@ int mlies_test_ExtractChannels_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mliesExtractChannels_malloc_from_path(
+        mli_c(mliesPhotonStream_malloc_from_path(
                 &phs_back,
                 "tests/"
                 "resources/"
@@ -108,10 +111,10 @@ int mlies_test_ExtractChannels_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mlies_test_ExtractChannels_is_equal_verbose(&phs, &phs_back));
+        mli_c(mliesPhotonStream_is_equal_verbose(&phs, &phs_back));
 
-        mliesExtractChannels_free(&phs);
-        mliesExtractChannels_free(&phs_back);
+        mliesPhotonStream_free(&phs);
+        mliesPhotonStream_free(&phs_back);
 
         return 1;
     error:
