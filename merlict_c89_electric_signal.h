@@ -118,7 +118,7 @@ struct mliesConverter {
 };
 
 int mlies_photo_electric_convert(
-        const struct mliVector *photon_pipeline,
+        const struct mliesDynPhoton *photon_pipeline,
         struct mliesDynPulse *out_electric_pipeline,
         const double exposure_time,
         const struct mliFunc *converter_quantum_efficiency_vs_wavelength,
@@ -127,12 +127,8 @@ int mlies_photo_electric_convert(
         struct mliMT19937 *prng)
 {
         uint64_t i;
-        for (i = 0; i < photon_pipeline->size; i++) {
-
-                struct mliesPhoton ph = *(struct mliesPhoton *)mliVector_at(
-                        photon_pipeline,
-                        i);
-
+        for (i = 0; i < photon_pipeline->dyn.size; i++) {
+                struct mliesPhoton ph = photon_pipeline->arr[i];
                 double quantum_efficiency = MLI_NAN;
                 mli_c(mliFunc_evaluate(
                         converter_quantum_efficiency_vs_wavelength,
@@ -199,7 +195,7 @@ error:
 }
 
 int mlies_append_equi_distant_photons(
-        struct mliVector *photon_channel,
+        struct mliesDynPhoton *photon_channel,
         const double wavelength,
         const double start_time,
         const double stop_time,
@@ -214,9 +210,7 @@ int mlies_append_equi_distant_photons(
                 ph.arrival_time = (double)i*step;
                 ph.wavelength = 433e-9;
                 ph.simulation_truth_id = i;
-                mli_c(mliVector_push_back(
-                        photon_channel,
-                        &ph));
+                mli_c(mliesDynPhoton_push_back(photon_channel, &ph));
         }
         return 1;
 error:

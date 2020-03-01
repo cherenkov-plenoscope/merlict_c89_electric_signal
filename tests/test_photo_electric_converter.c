@@ -9,9 +9,10 @@ CASE("empty_input_yields_empty_output") {
         const double exposure_time = 50e-9;
         const double converter_dark_rate = 0.;
         const double converter_crosstalk_probability = 0.;
+        const uint64_t ch = 0;
 
-        mliesPhotonChannels_malloc(&photons, 1);
-        mliesPulseChannels_malloc(&pulses, 1);
+        mliesPhotonChannels_malloc(&photons, ch+1);
+        mliesPulseChannels_malloc(&pulses, ch+1);
 
         converter_pde.num_points = 2;
         mliFunc_malloc(&converter_pde);
@@ -20,17 +21,17 @@ CASE("empty_input_yields_empty_output") {
         converter_pde.y[0] = 0.5;
         converter_pde.y[1] = 0.5;
 
-        CHECK(photons.channels[0].size == 0);
-        CHECK(pulses.channels[0].dyn.size == 0);
+        CHECK(photons.channels[ch].dyn.size == 0);
+        CHECK(pulses.channels[ch].dyn.size == 0);
         CHECK(mlies_photo_electric_convert(
-                &photons.channels[0],
-                &pulses.channels[0],
+                &photons.channels[ch],
+                &pulses.channels[ch],
                 exposure_time,
                 &converter_pde,
                 converter_dark_rate,
                 converter_crosstalk_probability,
                 &prng));
-        CHECK(pulses.channels[0].dyn.size == 0);
+        CHECK(pulses.channels[ch].dyn.size == 0);
 
         mliFunc_free(&converter_pde);
         mliesPulseChannels_free(&pulses);
@@ -48,9 +49,10 @@ CASE("minimal_example") {
         const double converter_crosstalk_probability = 0.1;
         const double wavelength = 433e-9;
         const int64_t num_photons = 100;
+        const uint64_t ch = 0;
 
-        mliesPhotonChannels_malloc(&photons, 1);
-        mliesPulseChannels_malloc(&pulses, 1);
+        mliesPhotonChannels_malloc(&photons, ch+1);
+        mliesPulseChannels_malloc(&pulses, ch+1);
 
         converter_pde.num_points = 2;
         mliFunc_malloc(&converter_pde);
@@ -60,22 +62,22 @@ CASE("minimal_example") {
         converter_pde.y[1] = 0.5;
 
         CHECK(mlies_append_equi_distant_photons(
-                &photons.channels[0],
+                &photons.channels[ch],
                 wavelength,
                 0.0,
                 exposure_time,
                 num_photons));
 
-        CHECK(pulses.channels[0].dyn.size == 0);
+        CHECK(pulses.channels[ch].dyn.size == 0);
         CHECK(mlies_photo_electric_convert(
-                &photons.channels[0],
-                &pulses.channels[0],
+                &photons.channels[ch],
+                &pulses.channels[ch],
                 exposure_time,
                 &converter_pde,
                 converter_dark_rate,
                 converter_crosstalk_probability,
                 &prng));
-        CHECK(pulses.channels[0].dyn.size > 0.5*num_photons);
+        CHECK(pulses.channels[ch].dyn.size > 0.5*num_photons);
 
         mliFunc_free(&converter_pde);
         mliesPulseChannels_free(&pulses);
@@ -90,6 +92,7 @@ CASE("input_pulses_absorbed_zero_qunatum_eff") {
         const double converter_dark_rate = 0.0;
         const double converter_crosstalk_probability = 0.0;
         struct mliesPulseChannels pulses = mliesPulseChannels_init();
+        const uint64_t ch = 0;
 
         converter_pde.num_points = 2;
         mliFunc_malloc(&converter_pde);
@@ -98,26 +101,26 @@ CASE("input_pulses_absorbed_zero_qunatum_eff") {
         converter_pde.y[0] = 0.0;
         converter_pde.y[1] = 0.0;
 
-        CHECK(mliesPhotonChannels_malloc(&photons, 1));
+        CHECK(mliesPhotonChannels_malloc(&photons, ch+1));
         CHECK(mlies_append_equi_distant_photons(
-                &photons.channels[0],
+                &photons.channels[ch],
                 433e-9,
                 0.0,
                 exposure_time,
                 1337));
-        CHECK(photons.channels[0].size == 1337);
+        CHECK(photons.channels[ch].dyn.size == 1337);
 
         mliesPulseChannels_malloc(&pulses, 1);
         CHECK(mlies_photo_electric_convert(
-                &photons.channels[0],
-                &pulses.channels[0],
+                &photons.channels[ch],
+                &pulses.channels[ch],
                 exposure_time,
                 &converter_pde,
                 converter_dark_rate,
                 converter_crosstalk_probability,
                 &prng));
 
-        CHECK(pulses.channels[0].dyn.size == 0u);
+        CHECK(pulses.channels[ch].dyn.size == 0u);
         mliFunc_free(&converter_pde);
         mliesPhotonChannels_free(&photons);
         mliesPulseChannels_free(&pulses);
@@ -133,6 +136,7 @@ CASE("input_pulses_pass_qunatum_eff_is_one") {
         const double converter_dark_rate = 0.0;
         const double converter_crosstalk_probability = 0.0;
         struct mliesPulseChannels pulses = mliesPulseChannels_init();
+        const uint64_t ch = 0;
 
         converter_pde.num_points = 2;
         mliFunc_malloc(&converter_pde);
@@ -141,31 +145,29 @@ CASE("input_pulses_pass_qunatum_eff_is_one") {
         converter_pde.y[0] = 1.0;
         converter_pde.y[1] = 1.0;
 
-        CHECK(mliesPhotonChannels_malloc(&photons, 1));
+        CHECK(mliesPhotonChannels_malloc(&photons, ch+1));
         CHECK(mlies_append_equi_distant_photons(
-                &photons.channels[0],
+                &photons.channels[ch],
                 433e-9,
                 0.0,
                 exposure_time,
                 1337));
-        CHECK(photons.channels[0].size == 1337);
+        CHECK(photons.channels[ch].dyn.size == 1337);
 
         mliesPulseChannels_malloc(&pulses, 1);
         CHECK(mlies_photo_electric_convert(
-                &photons.channels[0],
-                &pulses.channels[0],
+                &photons.channels[ch],
+                &pulses.channels[ch],
                 exposure_time,
                 &converter_pde,
                 converter_dark_rate,
                 converter_crosstalk_probability,
                 &prng));
 
-        CHECK(pulses.channels[0].dyn.size == 1337u);
-        for (i = 0; i < pulses.channels[0].dyn.size; i++) {
+        CHECK(pulses.channels[ch].dyn.size == 1337u);
+        for (i = 0; i < pulses.channels[ch].dyn.size; i++) {
                 struct mliesPulse pulse = pulses.channels[0].arr[i];
-                struct mliesPhoton photon = *(struct mliesPhoton *)mliVector_at(
-                        &photons.channels[0],
-                        i);
+                struct mliesPhoton photon = photons.channels[0].arr[i];
                 CHECK(pulse.arrival_time == photon.arrival_time);
                 CHECK(pulse.simulation_truth_id == photon.simulation_truth_id);
         }
