@@ -5,7 +5,6 @@
 #include <stdint.h>
 #include <math.h>
 #include "../merlict_c89/mliFunc.h"
-#include "../merlict_c89/mliVector.h"
 #include "../merlict_c89/mliMT19937.h"
 
 #include "mlies_constants.h"
@@ -70,7 +69,7 @@ int mlies_converter_add_incoming_pulse(
         const double converter_crosstalk_probability,
         struct mliMT19937 *prng)
 {
-        mli_c(mliesDynPulse_push_back(out_electric_pipeline, &incoming_pulse));
+        mli_c(mliesDynPulse_push_back(out_electric_pipeline, incoming_pulse));
         if (converter_crosstalk_probability >= mliMT19937_uniform(prng)) {
                 struct mliesPulse crosstalk_pulse;
                 crosstalk_pulse.arrival_time = incoming_pulse.arrival_time;
@@ -186,7 +185,7 @@ int mlies_extract_pulses(
                         extracted_pulse.arrival_time_slice = (uint8_t)slice;
                         mli_c(mliesDynExtract_push_back(
                                 out_extracted_pulse_channel,
-                                &extracted_pulse));
+                                extracted_pulse));
                 }
         }
         return 1;
@@ -210,7 +209,7 @@ int mlies_append_equi_distant_photons(
                 ph.arrival_time = (double)i*step;
                 ph.wavelength = 433e-9;
                 ph.simulation_truth_id = i;
-                mli_c(mliesDynPhoton_push_back(photon_channel, &ph));
+                mli_c(mliesDynPhoton_push_back(photon_channel, ph));
         }
         return 1;
 error:

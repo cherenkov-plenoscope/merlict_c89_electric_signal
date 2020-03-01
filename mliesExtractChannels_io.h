@@ -99,7 +99,7 @@ int mliesPhotonStream_malloc_from_file(
                         expulse.arrival_time_slice = symbol;
                         mli_c(mliesDynExtract_push_back(
                             &phs->stream.channels[channel],
-                            &expulse));
+                            expulse));
                 }
         }
         return 1;

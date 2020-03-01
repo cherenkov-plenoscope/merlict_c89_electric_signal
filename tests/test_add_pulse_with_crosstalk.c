@@ -20,7 +20,7 @@ CASE("add pulse to electric pipeline with crosstalk") {
                 initial_pulse.arrival_time = 1.;
                 initial_pulse.simulation_truth_id = -1;
                 CHECK(mliesDynPulse_push_back(
-                        &electric_pipeline.channels[0], &initial_pulse));
+                        &electric_pipeline.channels[0], initial_pulse));
         }
 
         CHECK(electric_pipeline.channels[0].dyn.size == num_initial_pulses);

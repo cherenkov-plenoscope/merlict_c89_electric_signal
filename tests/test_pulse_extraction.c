@@ -16,7 +16,7 @@ CASE("truncate_invalid_arrival_times") {
                 struct mliesPulse pulse;
                 pulse.arrival_time = time_slice_duration*(double)i;
                 pulse.simulation_truth_id = 0;
-                CHECK(mliesDynPulse_push_back(&pulses.channels[0], &pulse));
+                CHECK(mliesDynPulse_push_back(&pulses.channels[0], pulse));
         }
 
         num_invalid_photons = 0u;
@@ -72,7 +72,7 @@ CASE("arrival_time_std") {
             struct mliesPulse pulse;
             pulse.arrival_time = true_arrival_time;
             pulse.simulation_truth_id = i;
-            CHECK(mliesDynPulse_push_back(&pulses.channels[0], &pulse));
+            CHECK(mliesDynPulse_push_back(&pulses.channels[0], pulse));
         }
 
         CHECK(mliesExtractChannels_malloc(&extracts, 1u));

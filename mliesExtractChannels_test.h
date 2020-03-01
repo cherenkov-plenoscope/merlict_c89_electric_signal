@@ -65,7 +65,7 @@ int mliesPhotonStream_expose_poisson(
                                          1000*mliMT19937_uniform(prng);
                                 mli_c(mliesDynExtract_push_back(
                                         &phs->stream.channels[ch],
-                                        &expulse));
+                                        expulse));
                         }
                 }
         }

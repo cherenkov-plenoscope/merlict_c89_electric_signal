@@ -57,7 +57,7 @@ CASE("num_pulses ExtractChannels") {
                                         ex.arrival_time_slice = p + c;
                                         CHECK(mliesDynExtract_push_back(
                                                 &phs.stream.channels[c],
-                                                &ex));
+                                                ex));
                                 }
                         }
 
@@ -83,7 +83,7 @@ CASE("arrival_time_slices_below_next_channel_marker") {
         expulse.arrival_time_slice = 254u;
         expulse.simulation_truth_id = 0;
 
-        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], &expulse));
+        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], expulse));
 
         CHECK(mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,
@@ -127,7 +127,7 @@ CASE("arrival_slices_must_not_be_NEXT_CHANNEL_MARKER") {
 
         expulse.simulation_truth_id = simulation_truth_id;
         expulse.arrival_time_slice = MLIES_NEXT_CHANNEL_MARKER;
-        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], &expulse));
+        CHECK(mliesDynExtract_push_back(&phs.stream.channels[ch], expulse));
 
         rc = mliesPhotonStream_write_to_pulsepath_and_truthpath(
                 &phs,

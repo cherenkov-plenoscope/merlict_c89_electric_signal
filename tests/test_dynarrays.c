@@ -41,7 +41,7 @@ CASE("DynExtract push") {
                 struct mliesExtract extract;
                 extract.arrival_time_slice = 1;
                 extract.simulation_truth_id = i;
-                CHECK(mliesDynExtract_push_back(&channel, &extract));
+                CHECK(mliesDynExtract_push_back(&channel, extract));
         }
         CHECK(channel.dyn.size == 1337);
         CHECK(channel.arr != NULL);
@@ -94,7 +94,7 @@ CASE("DynPulse push") {
                 struct mliesPulse pu;
                 pu.arrival_time = 1.0;
                 pu.simulation_truth_id = i;
-                CHECK(mliesDynPulse_push_back(&channel, &pu));
+                CHECK(mliesDynPulse_push_back(&channel, pu));
         }
         CHECK(channel.dyn.size == 1337);
         CHECK(channel.arr != NULL);
@@ -149,7 +149,7 @@ CASE("DynPhoton push") {
                 struct mliesPhoton pu;
                 pu.arrival_time = 1.0;
                 pu.simulation_truth_id = i;
-                CHECK(mliesDynPhoton_push_back(&channel, &pu));
+                CHECK(mliesDynPhoton_push_back(&channel, pu));
         }
         CHECK(channel.dyn.size == 1337);
         CHECK(channel.arr != NULL);
