@@ -174,7 +174,7 @@ int mliesPhotonStream_write_to_pulsepath_and_truthpath(
         return 0;
 }
 
-int mliesPhotonStream_malloc_from_path(
+int mliesPhotonStream_malloc_from_pulsepath_and_truthpath(
         struct mliesPhotonStream *phs,
         const char *pulsepath,
         const char *truthpath)

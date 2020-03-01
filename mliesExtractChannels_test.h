@@ -102,7 +102,7 @@ int mlies_test_ExtractChannels_expose_write_and_read_back(
                 "resources/"
                 "photon_stream.phs.truth.tmp"));
 
-        mli_c(mliesPhotonStream_malloc_from_path(
+        mli_c(mliesPhotonStream_malloc_from_pulsepath_and_truthpath(
                 &phs_back,
                 "tests/"
                 "resources/"

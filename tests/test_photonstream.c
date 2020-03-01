@@ -94,7 +94,7 @@ CASE("arrival_time_slices_below_next_channel_marker") {
                 "resources/"
                 "arrival_time_slices_below_next_channel_marker.phs.truth.tmp"));
 
-        CHECK(mliesPhotonStream_malloc_from_path(
+        CHECK(mliesPhotonStream_malloc_from_pulsepath_and_truthpath(
                 &phs_back,
                 "tests/"
                 "resources/"
