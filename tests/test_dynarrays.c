@@ -105,3 +105,58 @@ CASE("DynPulse push") {
 }
 
 /* */
+
+CASE("DynPhoton simple") {
+        struct mliesPhoton c;
+        struct mliesDynPhoton channel = mliesDynPhoton_init();
+        CHECK(_mliesDynPhoton_test_after_init(&channel));
+
+        CHECK(mliesDynPhoton_malloc(&channel, 10));
+        CHECK(_mliesDynPhoton_test_after_malloc(&channel, 10));
+
+        channel.arr[0].simulation_truth_id = 42;
+        channel.arr[0].arrival_time = 137.0;
+        channel.arr[0].wavelength = 433e-9;
+        c = channel.arr[0];
+        CHECK(c.simulation_truth_id == 42);
+        CHECK(c.arrival_time == 137.0);
+        CHECK(c.wavelength == 433e-9);
+
+        mliesDynPhoton_free(&channel);
+        CHECK(_mliesDynPhoton_test_after_free(&channel));
+}
+
+CASE("DynPhoton malloc 0") {
+        struct mliesDynPhoton channel = mliesDynPhoton_init();
+        CHECK(_mliesDynPhoton_test_after_init(&channel));
+
+        CHECK(mliesDynPhoton_malloc(&channel, 0));
+        CHECK(_mliesDynPhoton_test_after_malloc(&channel, 0));
+
+        mliesDynPhoton_free(&channel);
+        CHECK(_mliesDynPhoton_test_after_free(&channel));
+}
+
+CASE("DynPhoton push") {
+        uint64_t i;
+        struct mliesDynPhoton channel = mliesDynPhoton_init();
+        CHECK(_mliesDynPhoton_test_after_init(&channel));
+
+        CHECK(mliesDynPhoton_malloc(&channel, 0));
+        CHECK(_mliesDynPhoton_test_after_malloc(&channel, 0));
+
+        for (i = 0; i < 1337; i++) {
+                struct mliesPhoton pu;
+                pu.arrival_time = 1.0;
+                pu.simulation_truth_id = i;
+                CHECK(mliesDynPhoton_push_back(&channel, &pu));
+        }
+        CHECK(channel.dyn.size == 1337);
+        CHECK(channel.arr != NULL);
+        CHECK(channel.dyn.capacity >= channel.dyn.size);
+
+        mliesDynPhoton_free(&channel);
+        CHECK(_mliesDynPhoton_test_after_free(&channel));
+}
+
+/* */
