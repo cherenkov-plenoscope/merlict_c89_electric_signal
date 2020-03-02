@@ -73,20 +73,16 @@ int mliesPhotonStream_malloc_from_file(
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
         mli_check(temp_char == 'S', "Expected char[2] to be 'S'.");
         mli_fread(&temp_char, sizeof(uint8_t), 1, file);
-        mli_check(temp_char == '\n', "Expected char[3] to be newline.");
+        mli_check(temp_char == '\n', "Expected char[3] to be '\\n'.");
 
         mli_fread(&format_version, sizeof(uint64_t), 1, file);
         mli_c(format_version == MLIES_PHOTON_STREAM_FORMAT_VERSION);
 
         mli_fread(&phs->time_slice_duration, sizeof(double), 1, file);
         mli_c(phs->time_slice_duration >= 0.);
-
         mli_fread(&num_channels, sizeof(uint64_t), 1, file);
-
         mli_fread(&phs->num_time_slices, sizeof(uint64_t), 1, file);
-
         mli_fread(&num_symbols, sizeof(uint64_t), 1, file);
-
         mli_c(mliesExtractChannels_malloc(&phs->stream, num_channels));
 
         channel = 0;
@@ -104,6 +100,7 @@ int mliesPhotonStream_malloc_from_file(
         }
         return 1;
    error:
+        mliesExtractChannels_free(&phs->stream);
         return 0;
 }
 

@@ -44,7 +44,7 @@ int mliesPhotonStream_malloc(
 void mliesPhotonStream_print(const struct mliesPhotonStream *phs)
 {
         uint64_t ch, pu;
-        printf("Start photon-stream\n");
+        printf("START photon-stream\n");
         printf("    time_slice_duration: %Es\n", phs->time_slice_duration);
         printf("    num_time_slices: %ld\n", phs->num_time_slices);
         printf("    num_channels: %ld\n", phs->stream.num_channels);
